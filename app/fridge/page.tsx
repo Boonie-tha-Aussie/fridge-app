@@ -35,21 +35,38 @@ export default async function FridgePage() {
   const today = new Date()
   const todayName = DAYS_OF_WEEK[today.getDay()]
 
-  // Fetch meal plan for the week from Supabase (day_of_week → recipe_title, cook_time_minutes)
+  // Fetch the most recent meal plan and its dinner items, joining recipes
   let mealPlanData: Record<string, { title: string | null; cookTime: string }> = {}
   try {
-    const { data, error } = await supabase
-      .from('meal_plan')
-      .select('day_of_week, recipe_title, cook_time_minutes')
+    // get most recent meal plan
+    const { data: plans, error: plansErr } = await supabase
+      .from('meal_plans')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    if (!error && Array.isArray(data)) {
-      const rows = data as MealPlanRow[]
-      for (const row of rows) {
-        const cookTime = row.cook_time_minutes ? `${row.cook_time_minutes} min` : '—'
-        mealPlanData[row.day_of_week] = { title: row.recipe_title, cookTime }
+    if (plansErr) {
+      console.warn('Supabase error fetching meal_plans:', plansErr)
+    } else if (Array.isArray(plans) && plans.length > 0 && plans[0].id) {
+      const planId = plans[0].id
+      // fetch dinner items and join recipes
+      const { data: items, error: itemsErr } = await supabase
+        .from('meal_plan_items')
+        .select('day_of_week, meal_type, recipes(id, title, cook_time_minutes)')
+        .eq('meal_plan_id', planId)
+        .eq('meal_type', 'DINNER')
+
+      if (itemsErr) {
+        console.warn('Supabase error fetching meal_plan_items:', itemsErr)
+      } else if (Array.isArray(items)) {
+        for (const item of items as any[]) {
+          const day = item.day_of_week
+          const recipe = item.recipes
+          const title = recipe?.title ?? null
+          const cookTime = recipe?.cook_time_minutes ? `${recipe.cook_time_minutes} min` : '—'
+          mealPlanData[day] = { title, cookTime }
+        }
       }
-    } else if (error) {
-      console.warn('Supabase error:', error)
     }
   } catch (err) {
     console.warn('Supabase fetch failed:', err)
@@ -81,7 +98,7 @@ export default async function FridgePage() {
         <p className="mt-3 text-sm md:text-base fridge-muted">Tap a day to open Cooking Mode (future).</p>
       </header>
 
-      <section className="w-full max-w-6xl flex flex-col gap-4">
+      <section className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
         {mealPlan.map(({ day, title: meal, cookTime }) => {
           const isToday = day === todayName
           const isPlanned = meal !== null
@@ -115,7 +132,7 @@ export default async function FridgePage() {
               {isPlanned ? (
                 <p className="mt-6 text-2xl md:text-3xl font-semibold leading-tight" style={{color: 'var(--muted-very-light)'}}>{meal}</p>
               ) : (
-                <p className="mt-6 text-2xl md:text-3xl font-semibold leading-tight fridge-muted">U N P L A N N E D</p>
+                <p className="mt-6 text-2xl md:text-3xl font-semibold leading-tight fridge-muted">No meal planned</p>
               )}
 
               <div className="mt-4 flex items-center justify-between text-sm">
