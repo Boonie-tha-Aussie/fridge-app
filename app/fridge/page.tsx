@@ -61,12 +61,30 @@ export default async function FridgePage() {
         console.warn('Supabase error fetching meal_plan_items:', itemsErr)
       } else if (Array.isArray(items)) {
         for (const item of items as any[]) {
-          const day = item.day_of_week
+          const rawDay = item.day_of_week
+          // normalize numeric or numeric-string days to weekday names (0=Sunday..6=Saturday)
+          let dayName: string | null = null
+          if (typeof rawDay === 'number') {
+            dayName = DAYS_OF_WEEK[rawDay]
+          } else if (typeof rawDay === 'string') {
+            if (/^\d+$/.test(rawDay)) {
+              dayName = DAYS_OF_WEEK[Number(rawDay)]
+            } else {
+              // normalize capitalization (e.g., 'monday' -> 'Monday')
+              dayName = rawDay.charAt(0).toUpperCase() + rawDay.slice(1).toLowerCase()
+            }
+          }
+
+          if (!dayName || !DAYS_OF_WEEK.includes(dayName)) {
+            // unknown day format; skip
+            continue
+          }
+
           const recipe = item.recipes
           const title = recipe?.title ?? null
           const rawCook = recipe?.cook_time ?? recipe?.cook_time_minutes
           const cookTime = rawCook ? `${rawCook} min` : '—'
-          mealPlanData[day] = { title, cookTime }
+          mealPlanData[dayName] = { title, cookTime }
         }
       }
     }
