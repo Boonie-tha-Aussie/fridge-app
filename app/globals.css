@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  /* Muted palette (olive / earthy tones) provided by user */
+  --muted-very-light: #E1D9C9;
+  --muted-light: #AE9372;
+  --muted-warm: #B27D57;
+  --muted-dark-warm: #7F4B30;
+  --muted-olive: #7D8769;
+  --muted-olive-dark: #424C21;
+  --muted-deep: #173125;
+  --muted-navy: #212E40;
+  /* Charcoal used for small muted labels */
+  --fridge-charcoal: #2c2c2c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Fridge-specific theme util classes */
+.fridge-bg {
+  background: var(--muted-navy) !important;
+  color: var(--muted-very-light) !important;
+}
+
+.fridge-header-date {
+  color: var(--muted-light) !important;
+}
+
+.fridge-card {
+  /* Other days: muted olive */
+  background: var(--muted-olive);
+  color: var(--muted-very-light);
+  border: 1px solid rgba(125,135,105,0.12);
+}
+
+.fridge-card-today {
+  /* Today's card: darker olive */
+  background: var(--muted-olive-dark);
+  color: var(--muted-very-light);
+}
+
+.fridge-tag {
+  background: rgba(125,135,105,0.18);
+  color: var(--muted-very-light);
+}
+
+.fridge-muted {
+  color: var(--muted-light) !important;
+}
+
+.fridge-charcoal {
+  color: var(--fridge-charcoal) !important;
+}
