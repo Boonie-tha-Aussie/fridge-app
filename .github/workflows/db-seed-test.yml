@@ -1,0 +1,24 @@
+name: DB Seed Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-db-seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install
+        run: npm ci
+      - name: Run tests (DB)
+        env:
+          PG_CONN: ${{ secrets.SUPABASE_PG_CONN }}
+          PG_ALLOW_SELF_SIGNED: 'true'
+        run: npm test --silent
