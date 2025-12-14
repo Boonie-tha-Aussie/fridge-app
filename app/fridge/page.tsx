@@ -19,7 +19,8 @@ import supabase from '../../lib/supabaseClient'
 type MealPlanRow = {
   day_of_week: string
   recipe_title: string | null
-  cook_time_minutes: number | null
+  cook_time?: number | null
+  cook_time_minutes?: number | null
 }
 
 function formattedHeaderDate() {
@@ -49,10 +50,10 @@ export default async function FridgePage() {
       console.warn('Supabase error fetching meal_plans:', plansErr)
     } else if (Array.isArray(plans) && plans.length > 0 && plans[0].id) {
       const planId = plans[0].id
-      // fetch dinner items and join recipes
+      // fetch dinner items and join recipes (support both `cook_time` and legacy `cook_time_minutes`)
       const { data: items, error: itemsErr } = await supabase
         .from('meal_plan_items')
-        .select('day_of_week, meal_type, recipes(id, title, cook_time_minutes)')
+        .select('day_of_week, meal_type, recipes(id, title, cook_time, cook_time_minutes)')
         .eq('meal_plan_id', planId)
         .eq('meal_type', 'DINNER')
 
@@ -63,7 +64,8 @@ export default async function FridgePage() {
           const day = item.day_of_week
           const recipe = item.recipes
           const title = recipe?.title ?? null
-          const cookTime = recipe?.cook_time_minutes ? `${recipe.cook_time_minutes} min` : '—'
+          const rawCook = recipe?.cook_time ?? recipe?.cook_time_minutes
+          const cookTime = rawCook ? `${rawCook} min` : '—'
           mealPlanData[day] = { title, cookTime }
         }
       }

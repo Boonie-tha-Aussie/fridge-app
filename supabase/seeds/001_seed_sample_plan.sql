@@ -7,9 +7,25 @@ DECLARE
   p_id UUID;
 BEGIN
   -- Insert sample recipe (adjust fields to your schema)
-  INSERT INTO recipes (title, cook_time_minutes)
-  VALUES ('Spaghetti with Tomato Sauce', 25)
-  RETURNING id INTO r_id;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'recipes' AND column_name = 'cook_time'
+  ) THEN
+    INSERT INTO recipes (title, cook_time)
+    VALUES ('Spaghetti with Tomato Sauce', 25)
+    RETURNING id INTO r_id;
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'recipes' AND column_name = 'cook_time_minutes'
+  ) THEN
+    INSERT INTO recipes (title, cook_time_minutes)
+    VALUES ('Spaghetti with Tomato Sauce', 25)
+    RETURNING id INTO r_id;
+  ELSE
+    INSERT INTO recipes (title)
+    VALUES ('Spaghetti with Tomato Sauce')
+    RETURNING id INTO r_id;
+  END IF;
 
   -- Create a sample meal plan
   INSERT INTO meal_plans (name)
